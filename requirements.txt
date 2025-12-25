@@ -1,23 +1,11 @@
 # ADME-Tox Predictor - Dependencies
-# AI-Based Drug Safety & Toxicity Prediction System
+# Streamlit Cloud Compatible Version
 
-# Web Framework
 streamlit
-
-# Scientific Computing
 numpy
 pandas
-
-# Machine Learning (Fixed versions for model compatibility)
 scikit-learn==1.5.1
 joblib==1.4.2
-
-# Chemistry & Molecular Descriptors
 rdkit-pypi
-mordred
-
-# Visualization
 plotly
-
-# Utilities
 Pillow
