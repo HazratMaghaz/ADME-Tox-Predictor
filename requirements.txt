@@ -2,22 +2,22 @@
 # AI-Based Drug Safety & Toxicity Prediction System
 
 # Web Framework
-streamlit==1.31.0
+streamlit
 
 # Scientific Computing
-numpy==1.24.0
-pandas==2.1.4
+numpy
+pandas
 
 # Machine Learning (Fixed versions for model compatibility)
 scikit-learn==1.5.1
 joblib==1.4.2
 
 # Chemistry & Molecular Descriptors
-rdkit-pypi==2022.9.5
-mordred==1.2.0
+rdkit-pypi
+mordred
 
 # Visualization
-plotly==5.18.0
+plotly
 
 # Utilities
-Pillow==10.0.0
+Pillow
