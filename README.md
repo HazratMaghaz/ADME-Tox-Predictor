@@ -131,20 +131,11 @@ This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file
 
 **Hazrat Maghaz**
 - GitHub: [@hazratmaghaz](https://github.com/hazratmaghaz)
-- LinkedIn: [Your LinkedIn]
-- Portfolio: [Your Website]
-
-## 🙏 Acknowledgments
-
-- **RDKit** - Open-source cheminformatics toolkit
-- **Mordred** - Molecular descriptor calculation
-- **Streamlit** - Web framework
-- Dataset sources: [ChEMBL, PubChem, ToxCast]
 
 ## 📧 Contact
 
 For questions, collaborations, or support:
-- Email: your.email@example.com
+- Email: maaz28608@gmail.com
 - GitHub Issues: [Open an issue](https://github.com/hazratmaghaz/ADME-Tox-Predictor/issues)
 
 ---
