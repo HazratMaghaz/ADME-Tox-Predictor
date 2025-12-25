@@ -1,0 +1,94 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+notebooks/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.venv
+*.env
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Data files - exclude all except example
+*.csv
+!example_batch.csv
+*.xlsx
+*.db
+
+# Personal/Client Documentation - DO NOT PUSH
+*.docx
+*.doc
+*.txt
+!requirements.txt
+*.pdf
+*.zip
+*.md
+!README.md
+!LICENSE
+
+# Project directories to exclude
+CLIENT_DELIVERY/
+ADME-project-AI-based/
+documentation/
+FUTURE_ENHANCEMENTS/
+interactive_visualizations/
+results/
+data/
+
+# Test/Debug scripts
+debug_*.py
+test_*.py
+generate_*.py
+
+# Batch files (Windows specific)
+*.bat
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Documentation artifacts
+docs/_build/

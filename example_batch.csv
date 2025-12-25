@@ -1,0 +1,11 @@
+Name,SMILES
+Aspirin,CC(=O)Oc1ccccc1C(=O)O
+Caffeine,CN1C=NC2=C1C(=O)N(C(=O)N2C)C
+Ibuprofen,CC(C)Cc1ccc(cc1)C(C)C(O)=O
+Paracetamol,CC(=O)Nc1ccc(O)cc1
+Warfarin,CC(=O)CC(C1=CC=CC=C1)C2=C(C3=CC=CC=C3OC2=O)O
+Dopamine,NCCc1ccc(O)c(O)c1
+Adrenaline,CNC(C(O)c1ccc(O)c(O)c1)
+Morphine,CN1CC[C@]23[C@H]4Oc5c2c(ccc5O)C[C@@H]1[C@@H]3C=C[C@@H]4O
+Nicotine,CN1CCC[C@H]1c2cccnc2
+Glucose,OC[C@H]1O[C@H](O)[C@H](O)[C@@H](O)[C@@H]1O
