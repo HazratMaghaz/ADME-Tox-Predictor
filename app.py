@@ -11,6 +11,14 @@ import plotly.graph_objects as go
 import plotly.express as px
 from rdkit import Chem
 from rdkit.Chem import Draw
+import warnings
+
+# Suppress sklearn version warnings
+try:
+    from sklearn.exceptions import InconsistentVersionWarning
+    warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+except ImportError:
+    pass
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
@@ -158,7 +166,7 @@ def display_prediction_report(result):
         st.subheader("2D Structure")
         mol_img = mol_to_image(result['input']['canonical_smiles'])
         if mol_img:
-            st.image(mol_img, use_column_width=True)
+            st.image(mol_img, width=400)
         else:
             st.warning("Could not generate structure image")
     
@@ -380,7 +388,7 @@ def main():
         with col2:
             st.write("")
             st.write("")
-            predict_button = st.button("🚀 Predict", type="primary", use_container_width=True)
+            predict_button = st.button("🚀 Predict", type="primary", width="stretch")
         
         # Clear example after use
         if 'example_smiles' in st.session_state and predict_button:
