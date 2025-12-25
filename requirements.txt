@@ -1,11 +1,11 @@
-# ADME-Tox Predictor - Dependencies
-# Streamlit Cloud Compatible Version
+# Note: This project uses environment.yml for conda dependencies
+# RDKit is installed via conda, not pip
+# Only use this file if environment.yml is not available
 
 streamlit
 numpy
 pandas
 scikit-learn==1.5.1
 joblib==1.4.2
-rdkit-pypi
 plotly
 Pillow

@@ -1,0 +1,16 @@
+name: adme-tox
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - rdkit
+  - pip
+  - pip:
+    - streamlit
+    - numpy
+    - pandas
+    - scikit-learn==1.5.1
+    - joblib==1.4.2
+    - plotly
+    - Pillow
