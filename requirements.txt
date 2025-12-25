@@ -1,11 +1,8 @@
-# Note: This project uses environment.yml for conda dependencies
-# RDKit is installed via conda, not pip
-# Only use this file if environment.yml is not available
-
-streamlit
-numpy
-pandas
+streamlit>=1.28.0
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0
 scikit-learn==1.5.1
 joblib==1.4.2
-plotly
-Pillow
+rdkit>=2023.3.1
+plotly>=5.17.0
+Pillow>=10.0.0
