@@ -228,13 +228,13 @@ def display_prediction_report(result):
     with desc_tab1:
         st.caption("Fundamental physicochemical properties used by the Phase 1 ADME-Tox models.")
         desc_df = pd.DataFrame([result['descriptors']])
-        st.dataframe(desc_df, width=None)
+        st.dataframe(desc_df, use_container_width=True)
         
     with desc_tab2:
         if count_rdkit > 0:
             st.caption("Extended structural and electronic descriptors from RDKit.")
             rdkit_df = pd.DataFrame([result['descriptors_rdkit_extended']])
-            st.dataframe(rdkit_df, width=None)
+            st.dataframe(rdkit_df, use_container_width=True)
         else:
             st.warning("No extended RDKit descriptors available.")
 
@@ -242,7 +242,7 @@ def display_prediction_report(result):
         if count_mordred > 0:
             st.caption("Comprehensive molecular descriptors from Mordred (2D).")
             mordred_df = pd.DataFrame([result['descriptors_extended']])
-            st.dataframe(mordred_df, width=None)
+            st.dataframe(mordred_df, use_container_width=True)
         else:
             st.error("Mordred descriptors not available.")
 
@@ -507,7 +507,7 @@ def main():
                     st.success(f"✓ Loaded {len(df_input)} molecules")
                     
                     st.write("Preview:")
-                    st.dataframe(df_input.head(), width=None)
+                    st.dataframe(df_input.head(), use_container_width=True)
                     
                     if st.button("🚀 Predict All", type="primary", key="batch_predict"):
                         results_list = []
@@ -567,7 +567,7 @@ def main():
                         full_results_map = st.session_state['batch_full_results']
 
                         st.subheader("Results")
-                        st.dataframe(df_results[['ID', 'SMILES', 'Formula', 'MW', 'Overall_Risk', 'Risk_Level']], width=None)
+                        st.dataframe(df_results[['ID', 'SMILES', 'Formula', 'MW', 'Overall_Risk', 'Risk_Level']], use_container_width=True)
                         
                         # --- Batch Analysis Visualizations ---
                         st.markdown("---")
