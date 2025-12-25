@@ -158,7 +158,7 @@ def display_prediction_report(result):
         st.subheader("2D Structure")
         mol_img = mol_to_image(result['input']['canonical_smiles'])
         if mol_img:
-            st.image(mol_img, width=None)
+            st.image(mol_img, use_column_width=True)
         else:
             st.warning("Could not generate structure image")
     
