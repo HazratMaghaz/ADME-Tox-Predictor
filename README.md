@@ -1,3 +1,13 @@
+---
+title: ADME-Tox Predictor
+emoji: 🧬
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+license: mit
+---
+
 # 🧬 AI-Based ADME-Tox Predictor
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
