@@ -228,13 +228,13 @@ def display_prediction_report(result):
     with desc_tab1:
         st.caption("Fundamental physicochemical properties used by the Phase 1 ADME-Tox models.")
         desc_df = pd.DataFrame([result['descriptors']])
-        st.dataframe(desc_df, use_container_width=True)
+        st.dataframe(desc_df, width=None)
         
     with desc_tab2:
         if count_rdkit > 0:
             st.caption("Extended structural and electronic descriptors from RDKit.")
             rdkit_df = pd.DataFrame([result['descriptors_rdkit_extended']])
-            st.dataframe(rdkit_df, use_container_width=True)
+            st.dataframe(rdkit_df, width=None)
         else:
             st.warning("No extended RDKit descriptors available.")
 
@@ -242,7 +242,7 @@ def display_prediction_report(result):
         if count_mordred > 0:
             st.caption("Comprehensive molecular descriptors from Mordred (2D).")
             mordred_df = pd.DataFrame([result['descriptors_extended']])
-            st.dataframe(mordred_df, use_container_width=True)
+            st.dataframe(mordred_df, width=None)
         else:
             st.error("Mordred descriptors not available.")
 
@@ -299,11 +299,11 @@ def display_prediction_report(result):
         st.subheader("Risk Profile")
         radar_fig = create_radar_chart(predictions)
         if radar_fig:
-            st.plotly_chart(radar_fig, use_container_width=True)
+            st.plotly_chart(radar_fig)
         
         # Gauge chart
         gauge_fig = create_risk_gauge(overall_risk)
-        st.plotly_chart(gauge_fig, use_container_width=True)
+        st.plotly_chart(gauge_fig)
 
 
 def main():
@@ -507,7 +507,7 @@ def main():
                     st.success(f"✓ Loaded {len(df_input)} molecules")
                     
                     st.write("Preview:")
-                    st.dataframe(df_input.head(), use_container_width=True)
+                    st.dataframe(df_input.head(), width=None)
                     
                     if st.button("🚀 Predict All", type="primary", key="batch_predict"):
                         results_list = []
@@ -567,7 +567,7 @@ def main():
                         full_results_map = st.session_state['batch_full_results']
 
                         st.subheader("Results")
-                        st.dataframe(df_results[['ID', 'SMILES', 'Formula', 'MW', 'Overall_Risk', 'Risk_Level']], use_container_width=True)
+                        st.dataframe(df_results[['ID', 'SMILES', 'Formula', 'MW', 'Overall_Risk', 'Risk_Level']], width=None)
                         
                         # --- Batch Analysis Visualizations ---
                         st.markdown("---")
@@ -601,7 +601,7 @@ def main():
                                                 title='Overall Risk Distribution',
                                                 color='Risk Level',
                                                 color_discrete_map={'High': 'red', 'Medium': 'orange', 'Low': 'green'})
-                                st.plotly_chart(fig_risk, use_container_width=True)
+                                st.plotly_chart(fig_risk)
 
                         with col_viz2:
                             # 3. Chemical Space (MW vs Solubility)
@@ -612,7 +612,7 @@ def main():
                                                     hover_data=['SMILES', 'ID'],
                                                     title='MW vs Solubility (Colored by Risk)',
                                                     color_discrete_map={'High': 'red', 'Medium': 'orange', 'Low': 'green'})
-                                st.plotly_chart(fig_space, use_container_width=True)
+                                st.plotly_chart(fig_space)
                         
                         # 4. Toxicity Breakdown
                         st.subheader("Toxicity Breakdown")
@@ -631,7 +631,7 @@ def main():
                                              title='Risk Counts per Endpoint',
                                              color_discrete_map={'High Risk': 'red', 'Low Risk': 'green'},
                                              barmode='group')
-                            st.plotly_chart(fig_tox, use_container_width=True)
+                            st.plotly_chart(fig_tox)
                         
                         st.markdown("---")
                         
