@@ -158,7 +158,7 @@ def display_prediction_report(result):
         st.subheader("2D Structure")
         mol_img = mol_to_image(result['input']['canonical_smiles'])
         if mol_img:
-            st.image(mol_img, use_column_width=True)
+            st.image(mol_img, width=None)
         else:
             st.warning("Could not generate structure image")
     
@@ -181,10 +181,18 @@ def display_prediction_report(result):
         st.subheader("Overall Risk")
         overall_risk = result['overall_risk']
         
-        risk_class = f"risk-{overall_risk['color']}"
+        # Determine color based on risk level
+        risk_level = overall_risk['level']
+        if risk_level == 'High':
+            risk_color = 'red'
+        elif risk_level == 'Medium':
+            risk_color = 'orange'
+        else:
+            risk_color = 'green'
+        
         st.markdown(f"""
-        <div class="{risk_class}">
-            <h3 style='margin:0;'>{overall_risk['level']}</h3>
+        <div style='padding:20px; border-radius:10px; background-color:rgba(255,0,0,0.1); border:2px solid {risk_color};'>
+            <h3 style='margin:0; color:{risk_color};'>{overall_risk['level']}</h3>
             <p style='margin:5px 0;'>Risk Score: {overall_risk['score']}%</p>
             <p style='margin:0; font-size:0.9em;'>{overall_risk['flagged_endpoints']}/{overall_risk['total_endpoints']} endpoints flagged</p>
         </div>
