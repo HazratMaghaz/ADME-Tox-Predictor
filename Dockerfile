@@ -1,5 +1,6 @@
 FROM python:3.11-slim
 
+# Version: 2.0.0 - Metabolism Module Active
 WORKDIR /app
 
 # Install system dependencies for RDKit
