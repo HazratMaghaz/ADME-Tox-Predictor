@@ -518,60 +518,60 @@ def main():
                                 """)
                         
                         display_prediction_report(result)
-                
-                # Download results
-                st.markdown("---")
-                st.subheader("💾 Download Results")
-                
-                # Prepare download data
-                download_data = {
-                    'Original_Input': result.get('input_metadata', {}).get('original_input', result['input']['smiles']),
-                    'Input_Type': result.get('input_metadata', {}).get('input_type', 'smiles'),
-                    'Resolved_SMILES': result.get('input_metadata', {}).get('resolved_smiles', result['input']['canonical_smiles']),
-                    'Canonical_SMILES': result['input']['canonical_smiles'],
-                    'Formula': result['input']['molecular_formula'],
-                    'Molecular_Weight': result['input']['molecular_weight'],
-                    'Max_Risk_Score': result['overall_risk']['score'],
-                    'Max_Risk_Endpoint': result['overall_risk'].get('max_endpoint', 'N/A'),
-                    'Risk_Status': result['overall_risk']['level'],
-                    'Flagged_Endpoints': result['overall_risk']['flagged_endpoints']
-                }
-                
-                # Add PubChem data if available
-                if result.get('input_metadata', {}).get('input_type') == 'name':
-                    download_data['PubChem_CID'] = result.get('input_metadata', {}).get('pubchem_cid', '')
-                    download_data['Resolved_Name'] = result.get('input_metadata', {}).get('resolved_name', '')
-                
-                # Add predictions
-                for endpoint, pred in result['predictions'].items():
-                    if endpoint == 'solubility':
-                        download_data['Solubility_logS'] = pred['logS']
-                    else:
-                        download_data[f'{endpoint}_risk'] = pred['risk']
-                        download_data[f'{endpoint}_probability'] = pred['probability']
-                
-                # Add descriptors
-                for desc, value in result['descriptors'].items():
-                    download_data[f'Descriptor_{desc}'] = value
+                        
+                        # Download results
+                        st.markdown("---")
+                        st.subheader("💾 Download Results")
+                        
+                        # Prepare download data
+                        download_data = {
+                            'Original_Input': result.get('input_metadata', {}).get('original_input', result['input']['smiles']),
+                            'Input_Type': result.get('input_metadata', {}).get('input_type', 'smiles'),
+                            'Resolved_SMILES': result.get('input_metadata', {}).get('resolved_smiles', result['input']['canonical_smiles']),
+                            'Canonical_SMILES': result['input']['canonical_smiles'],
+                            'Formula': result['input']['molecular_formula'],
+                            'Molecular_Weight': result['input']['molecular_weight'],
+                            'Max_Risk_Score': result['overall_risk']['score'],
+                            'Max_Risk_Endpoint': result['overall_risk'].get('max_endpoint', 'N/A'),
+                            'Risk_Status': result['overall_risk']['level'],
+                            'Flagged_Endpoints': result['overall_risk']['flagged_endpoints']
+                        }
+                        
+                        # Add PubChem data if available
+                        if result.get('input_metadata', {}).get('input_type') == 'name':
+                            download_data['PubChem_CID'] = result.get('input_metadata', {}).get('pubchem_cid', '')
+                            download_data['Resolved_Name'] = result.get('input_metadata', {}).get('resolved_name', '')
+                        
+                        # Add predictions
+                        for endpoint, pred in result['predictions'].items():
+                            if endpoint == 'solubility':
+                                download_data['Solubility_logS'] = pred['logS']
+                            else:
+                                download_data[f'{endpoint}_risk'] = pred['risk']
+                                download_data[f'{endpoint}_probability'] = pred['probability']
+                        
+                        # Add descriptors
+                        for desc, value in result['descriptors'].items():
+                            download_data[f'Descriptor_{desc}'] = value
 
-                # Add RDKit extended descriptors
-                for desc, value in result.get('descriptors_rdkit_extended', {}).items():
-                    download_data[f'RDKit_{desc}'] = value
+                        # Add RDKit extended descriptors
+                        for desc, value in result.get('descriptors_rdkit_extended', {}).items():
+                            download_data[f'RDKit_{desc}'] = value
 
-                # Add Mordred descriptors
-                for desc, value in result.get('descriptors_extended', {}).items():
-                    # keep original Mordred_* name but prefix to avoid collisions
-                    download_data[f'{desc}'] = value
-                
-                df_download = pd.DataFrame([download_data])
-                csv = df_download.to_csv(index=False)
-                
-                st.download_button(
-                    label="📥 Download as CSV",
-                    data=csv,
-                    file_name=f"ADME_Tox_Prediction_{result['input']['molecular_formula']}.csv",
-                    mime="text/csv"
-                )
+                        # Add Mordred descriptors
+                        for desc, value in result.get('descriptors_extended', {}).items():
+                            # keep original Mordred_* name but prefix to avoid collisions
+                            download_data[f'{desc}'] = value
+                        
+                        df_download = pd.DataFrame([download_data])
+                        csv = df_download.to_csv(index=False)
+                        
+                        st.download_button(
+                            label="📥 Download as CSV",
+                            data=csv,
+                            file_name=f"ADME_Tox_Prediction_{result['input']['molecular_formula']}.csv",
+                            mime="text/csv"
+                        )
         
         elif predict_button:
             st.warning("⚠️ Please enter a SMILES string first")
