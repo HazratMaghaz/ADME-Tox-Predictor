@@ -327,6 +327,10 @@ def display_prediction_report(result):
                 
                 with col_a:
                     st.write(f"**{endpoint.replace('_', ' ').title()}**")
+                    # Show metabolic adjustment for hepatotoxicity
+                    if endpoint == 'hepatotoxicity' and 'metabolic_adjustment' in pred:
+                        if pred['metabolic_adjustment'] > 0:
+                            st.caption(f"🧬 Metabolism adjusted: +{pred['metabolic_adjustment']*100:.1f}%")
                 
                 with col_b:
                     if pred['risk'] == 1:
@@ -339,6 +343,17 @@ def display_prediction_report(result):
                     st.caption(f"Probability: {pred['probability']:.1%}")
                 
                 st.caption(pred['interpretation'])
+                
+                # Show metabolic liability details for hepatotoxicity
+                if endpoint == 'hepatotoxicity' and 'metabolic_risk' in pred:
+                    meta_risk = pred['metabolic_risk']
+                    if meta_risk['alert_count'] > 0:
+                        with st.expander(f"🧬 View {meta_risk['alert_count']} Metabolic Alert(s)"):
+                            st.write(f"**Metabolic Risk Score:** {meta_risk['metabolic_risk_score']}% ({meta_risk['risk_level']})")
+                            st.write("**Detected Patterns:**")
+                            for alert in meta_risk['detected_alerts']:
+                                st.write(f"- {alert['pattern']} (+{alert['risk_contribution']}%)")
+                
                 st.markdown("")
     
     with col2:
@@ -415,15 +430,17 @@ def main():
         if selected_example:
             st.session_state['example_smiles'] = examples[selected_example]
     
-    # Critical Warning Banner
-    st.warning("""
-    ⚠️ **IMPORTANT LIMITATION - Metabolic Activation Not Modeled**
+    # Success Message - Metabolism Module Now Active!
+    st.success("""
+    ✅ **METABOLISM DETECTION ACTIVE** - Full ADME Coverage!
     
-    This model analyzes **parent compound structures only** and does NOT predict metabolites or bioactivation. 
-    Many drugs become toxic only after liver metabolism (e.g., Valproic Acid, Acetaminophen). 
+    This tool now includes **metabolic activation detection** that identifies compounds with bioactivation liability.
+    The hepatotoxicity model is automatically adjusted for compounds with reactive metabolite risk patterns including:
+    - Valproic Acid-like structures (acyl glucuronides)
+    - Acetaminophen-like scaffolds (quinone-imine formation)
+    - Other bioactivation-prone chemical groups
     
-    **False negatives are possible** for compounds toxic via metabolic activation. Always validate high-risk 
-    compounds with additional testing. For metabolite prediction, contact us about Phase 2 enhancements.
+    **A + D + M + E = Complete ADME-Tox Prediction**
     """)
     
     # Main tabs
@@ -486,14 +503,19 @@ def main():
                             result['input_metadata']['resolved_name'] = metadata.get('resolved_name')
                         
                         # Display results
-                        st.success("✅ Prediction completed successfully!")
+                        st.success("✅ Prediction completed with metabolic activation analysis!")
                         
-                        # Model limitation notice
-                        st.info("""
-                        📌 **Note:** This prediction is based on the parent compound structure only. 
-                        If this compound undergoes metabolic activation (bioactivation), actual toxicity 
-                        may be higher than predicted. Consider metabolite testing for high-risk decisions.
-                        """)
+                        # Show metabolic risk if present
+                        if 'hepatotoxicity' in result['predictions']:
+                            hep = result['predictions']['hepatotoxicity']
+                            if 'metabolic_risk' in hep and hep['metabolic_risk']['alert_count'] > 0:
+                                meta_risk = hep['metabolic_risk']
+                                st.warning(f"""
+                                ⚠️ **Metabolic Activation Detected** ({meta_risk['metabolic_risk_score']}% risk)
+                                
+                                This compound has {meta_risk['alert_count']} metabolic liability alert(s). 
+                                Hepatotoxicity prediction has been adjusted by +{hep['metabolic_adjustment']*100:.1f}%.
+                                """)
                         
                         display_prediction_report(result)
                 

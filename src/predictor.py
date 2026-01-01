@@ -11,6 +11,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, Lipinski
 
 from smiles_processor import SMILESProcessor
+from metabolism_alerts import MetabolismRiskDetector
 
 
 class ADMEToxPredictor:
@@ -26,6 +27,7 @@ class ADMEToxPredictor:
         """
         self.models_dir = Path(models_dir)
         self.processor = SMILESProcessor(use_extended_descriptors=use_extended_descriptors)
+        self.metabolism_detector = MetabolismRiskDetector()
         self.use_extended_descriptors = use_extended_descriptors
         self.models = {}
         self.scaler = None
@@ -209,15 +211,28 @@ class ADMEToxPredictor:
                 'interpretation': 'Carcinogenic risk' if carc_pred == 1 else 'No carcinogenic risk'
             }
         
-        # Hepatotoxicity (Classification)
+        # Hepatotoxicity (Classification) - ADJUSTED FOR METABOLIC ACTIVATION
         if 'hepatotoxicity' in self.models:
             hep_pred = self.models['hepatotoxicity'].predict(feature_vector_scaled)[0]
             hep_proba = self.models['hepatotoxicity'].predict_proba(feature_vector_scaled)[0]
+            base_hep_prob = hep_proba[1]
+            
+            # Detect metabolic activation risk
+            metabolic_risk = self.metabolism_detector.detect_metabolic_liability(smiles)
+            
+            # Adjust hepatotoxicity for metabolic activation
+            adjusted_prob, adjusted_risk = self.metabolism_detector.adjust_hepatotoxicity_prediction(
+                base_hep_prob, metabolic_risk
+            )
+            
             predictions['predictions']['hepatotoxicity'] = {
-                'risk': int(hep_pred),
-                'probability': round(hep_proba[1], 3),
-                'risk_level': self._get_risk_level(hep_proba[1]),
-                'interpretation': 'Hepatotoxic (liver toxic)' if hep_pred == 1 else 'Non-hepatotoxic'
+                'risk': int(adjusted_risk),
+                'probability': round(adjusted_prob, 3),
+                'probability_base': round(base_hep_prob, 3),
+                'metabolic_adjustment': round(adjusted_prob - base_hep_prob, 3),
+                'risk_level': self._get_risk_level(adjusted_prob),
+                'interpretation': 'Hepatotoxic (liver toxic)' if adjusted_risk == 1 else 'Non-hepatotoxic',
+                'metabolic_risk': metabolic_risk
             }
         
         # Overall risk score
