@@ -244,39 +244,45 @@ class ADMEToxPredictor:
             return "High"
     
     def _calculate_overall_risk(self, predictions: Dict) -> Dict:
-        """Calculate overall toxicity risk score"""
-        risk_count = 0
+        """Calculate overall toxicity risk score using MAX-POOLING (worst-case)"""
+        max_risk_score = 0
+        max_risk_endpoint = None
         total_endpoints = 0
+        flagged_count = 0
         
+        # Find maximum probability across all toxicity endpoints
         for endpoint, pred_data in predictions.items():
-            if endpoint != 'solubility' and 'risk' in pred_data:
+            if endpoint != 'solubility' and 'probability' in pred_data:
                 total_endpoints += 1
-                if pred_data['risk'] == 1:
-                    risk_count += 1
+                prob_percent = pred_data['probability'] * 100
+                
+                if pred_data.get('risk') == 1:
+                    flagged_count += 1
+                
+                if prob_percent > max_risk_score:
+                    max_risk_score = prob_percent
+                    max_risk_endpoint = endpoint
         
         if total_endpoints == 0:
-            return {'score': 0, 'level': 'Unknown'}
+            return {'score': 0, 'level': 'Unknown', 'color': 'gray', 'max_endpoint': None, 'flagged_endpoints': 0, 'total_endpoints': 0}
         
-        risk_percentage = (risk_count / total_endpoints) * 100
-        
-        if risk_percentage == 0:
-            level = "Safe"
-            color = "green"
-        elif risk_percentage < 50:
-            level = "Low Risk"
-            color = "yellow"
-        elif risk_percentage < 75:
-            level = "Medium Risk"
+        # Traffic light thresholds based on max score
+        if max_risk_score >= 80:
+            level = "DANGER 🔴"
+            color = "red"
+        elif max_risk_score >= 40:
+            level = "WARNING 🟡"
             color = "orange"
         else:
-            level = "High Risk"
-            color = "red"
+            level = "SAFE 🟢"
+            color = "green"
         
         return {
-            'score': round(risk_percentage, 1),
+            'score': round(max_risk_score, 1),
             'level': level,
             'color': color,
-            'flagged_endpoints': risk_count,
+            'max_endpoint': max_risk_endpoint.replace('_', ' ').title() if max_risk_endpoint else 'N/A',
+            'flagged_endpoints': flagged_count,
             'total_endpoints': total_endpoints
         }
 

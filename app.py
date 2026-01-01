@@ -12,6 +12,8 @@ import plotly.express as px
 from rdkit import Chem
 from rdkit.Chem import Draw
 import warnings
+import pubchempy as pcp
+import pubchempy as pcp
 
 # Suppress sklearn version warnings
 try:
@@ -77,6 +79,50 @@ def load_predictor_v2():
     # Compute extended descriptors for display/export, but the current Phase-1 models
     # will still use only the original 7 features internally.
     return ADMEToxPredictor(models_dir="models", use_extended_descriptors=True)
+
+
+@st.cache_data(ttl=86400)
+@st.cache_data(ttl=86400)
+def resolve_name_to_smiles(compound_name: str) -> dict:
+    """Resolve compound name to canonical SMILES via PubChem (cached for 24h)"""
+    try:
+        compounds = pcp.get_compounds(compound_name, 'name')
+        if compounds:
+            return {
+                'success': True,
+                'smiles': compounds[0].canonical_smiles,
+                'cid': compounds[0].cid,
+                'iupac_name': compounds[0].iupac_name if hasattr(compounds[0], 'iupac_name') else compound_name
+            }
+        else:
+            return {'success': False, 'error': 'No compound found in PubChem database'}
+    except Exception as e:
+        return {'success': False, 'error': f'PubChem API error: {str(e)}'}
+
+
+def detect_input_type(user_input: str) -> tuple:
+    """Detect if input is SMILES or compound name, return (type, canonical_smiles, metadata)"""
+    user_input = user_input.strip()
+    
+    # First try parsing as SMILES
+    try:
+        mol = Chem.MolFromSmiles(user_input)
+        if mol:
+            canonical = Chem.MolToSmiles(mol)
+            return ('smiles', canonical, {'original_input': user_input})
+    except:
+        pass
+    
+    # If not valid SMILES, try resolving as name
+    result = resolve_name_to_smiles(user_input)
+    if result['success']:
+        return ('name', result['smiles'], {
+            'original_input': user_input,
+            'pubchem_cid': result['cid'],
+            'resolved_name': result['iupac_name']
+        })
+    else:
+        return ('unknown', None, {'error': result['error'], 'original_input': user_input})
 
 
 def mol_to_image(smiles, size=(400, 300)):
@@ -201,8 +247,9 @@ def display_prediction_report(result):
         st.markdown(f"""
         <div style='padding:20px; border-radius:10px; background-color:rgba(255,0,0,0.1); border:2px solid {risk_color};'>
             <h3 style='margin:0; color:{risk_color};'>{overall_risk['level']}</h3>
-            <p style='margin:5px 0;'>Risk Score: {overall_risk['score']}%</p>
-            <p style='margin:0; font-size:0.9em;'>{overall_risk['flagged_endpoints']}/{overall_risk['total_endpoints']} endpoints flagged</p>
+            <p style='margin:5px 0;'><strong>Worst-Case Risk Score:</strong> {overall_risk['score']}%</p>
+            <p style='margin:0; font-size:0.9em;'><strong>Driven by:</strong> {overall_risk.get('max_endpoint', 'N/A')}</p>
+            <p style='margin:0; font-size:0.8em; margin-top:5px;'>{overall_risk['flagged_endpoints']}/{overall_risk['total_endpoints']} endpoints flagged</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -373,16 +420,16 @@ def main():
     
     # TAB 1: Single Prediction
     with tab1:
-        st.header("🔬 Enter Molecular Structure")
+        st.header("🔬 Enter Compound (SMILES or Name)")
         
         col1, col2 = st.columns([3, 1])
         
         with col1:
-            smiles_input = st.text_input(
-                "SMILES String:",
+            user_input = st.text_input(
+                "Compound Input:",
                 value=st.session_state.get('example_smiles', ''),
-                placeholder="e.g., CC(=O)Oc1ccccc1C(=O)O",
-                help="Enter a valid SMILES notation for your molecule"
+                placeholder="e.g., Aspirin or CC(=O)Oc1ccccc1C(=O)O",
+                help="Enter a compound name (e.g., Aspirin) or SMILES notation"
             )
         
         with col2:
@@ -395,17 +442,41 @@ def main():
             del st.session_state['example_smiles']
         
         # Make prediction
-        if predict_button and smiles_input:
-            with st.spinner('🔄 Processing molecule and making predictions...'):
-                result = predictor.predict(smiles_input)
-            
-            if 'error' in result:
-                st.error(f"❌ {result['error']}")
-                st.info("Please check your SMILES string and try again.")
-            else:
-                # Display results
-                st.success("✅ Prediction completed successfully!")
-                display_prediction_report(result)
+        if predict_button and user_input:
+            with st.spinner('🔄 Resolving input and making predictions...'):
+                # Detect input type and resolve to SMILES
+                input_type, canonical_smiles, metadata = detect_input_type(user_input)
+                
+                if input_type == 'unknown':
+                    st.error(f"❌ Could not resolve input: {metadata.get('error', 'Unknown error')}")
+                    st.info("Please enter a valid compound name or SMILES string.")
+                else:
+                    # Show resolution info
+                    if input_type == 'name':
+                        st.info(f"✅ **Input Type:** Compound Name  \n**Resolved Name:** {metadata.get('resolved_name', 'N/A')}  \n**PubChem CID:** {metadata.get('pubchem_cid', 'N/A')}  \n**Canonical SMILES:** `{canonical_smiles}`")
+                    else:
+                        st.info(f"✅ **Input Type:** SMILES  \n**Canonical SMILES:** `{canonical_smiles}`")
+                    
+                    # Run prediction
+                    result = predictor.predict(canonical_smiles)
+                    
+                    if 'error' in result:
+                        st.error(f"❌ {result['error']}")
+                        st.info("Prediction failed. Please check the input.")
+                    else:
+                        # Store metadata in result for export
+                        result['input_metadata'] = {
+                            'original_input': metadata.get('original_input', user_input),
+                            'input_type': input_type,
+                            'resolved_smiles': canonical_smiles
+                        }
+                        if input_type == 'name':
+                            result['input_metadata']['pubchem_cid'] = metadata.get('pubchem_cid')
+                            result['input_metadata']['resolved_name'] = metadata.get('resolved_name')
+                        
+                        # Display results
+                        st.success("✅ Prediction completed successfully!")
+                        display_prediction_report(result)
                 
                 # Download results
                 st.markdown("---")
@@ -413,13 +484,22 @@ def main():
                 
                 # Prepare download data
                 download_data = {
-                    'SMILES': result['input']['smiles'],
+                    'Original_Input': result.get('input_metadata', {}).get('original_input', result['input']['smiles']),
+                    'Input_Type': result.get('input_metadata', {}).get('input_type', 'smiles'),
+                    'Resolved_SMILES': result.get('input_metadata', {}).get('resolved_smiles', result['input']['canonical_smiles']),
                     'Canonical_SMILES': result['input']['canonical_smiles'],
                     'Formula': result['input']['molecular_formula'],
                     'Molecular_Weight': result['input']['molecular_weight'],
-                    'Overall_Risk_Score': result['overall_risk']['score'],
-                    'Overall_Risk_Level': result['overall_risk']['level']
+                    'Max_Risk_Score': result['overall_risk']['score'],
+                    'Max_Risk_Endpoint': result['overall_risk'].get('max_endpoint', 'N/A'),
+                    'Risk_Status': result['overall_risk']['level'],
+                    'Flagged_Endpoints': result['overall_risk']['flagged_endpoints']
                 }
+                
+                # Add PubChem data if available
+                if result.get('input_metadata', {}).get('input_type') == 'name':
+                    download_data['PubChem_CID'] = result.get('input_metadata', {}).get('pubchem_cid', '')
+                    download_data['Resolved_Name'] = result.get('input_metadata', {}).get('resolved_name', '')
                 
                 # Add predictions
                 for endpoint, pred in result['predictions'].items():
