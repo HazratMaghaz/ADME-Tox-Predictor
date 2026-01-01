@@ -1,6 +1,6 @@
 ---
 title: ADME Tox Predictor
-emoji: 👁
+emoji: 🧬
 colorFrom: pink
 colorTo: green
 sdk: docker
