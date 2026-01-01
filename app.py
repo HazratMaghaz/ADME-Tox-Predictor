@@ -415,6 +415,17 @@ def main():
         if selected_example:
             st.session_state['example_smiles'] = examples[selected_example]
     
+    # Critical Warning Banner
+    st.warning("""
+    ⚠️ **IMPORTANT LIMITATION - Metabolic Activation Not Modeled**
+    
+    This model analyzes **parent compound structures only** and does NOT predict metabolites or bioactivation. 
+    Many drugs become toxic only after liver metabolism (e.g., Valproic Acid, Acetaminophen). 
+    
+    **False negatives are possible** for compounds toxic via metabolic activation. Always validate high-risk 
+    compounds with additional testing. For metabolite prediction, contact us about Phase 2 enhancements.
+    """)
+    
     # Main tabs
     tab1, tab2 = st.tabs(["🔬 Single Prediction", "📊 Batch Prediction"])
     
@@ -476,6 +487,14 @@ def main():
                         
                         # Display results
                         st.success("✅ Prediction completed successfully!")
+                        
+                        # Model limitation notice
+                        st.info("""
+                        📌 **Note:** This prediction is based on the parent compound structure only. 
+                        If this compound undergoes metabolic activation (bioactivation), actual toxicity 
+                        may be higher than predicted. Consider metabolite testing for high-risk decisions.
+                        """)
+                        
                         display_prediction_report(result)
                 
                 # Download results
@@ -748,6 +767,11 @@ def main():
         <p>🧬 AI-Based ADME-Tox Prediction System - Phase 2</p>
         <p>Built with RDKit, Scikit-learn, and Streamlit</p>
         <p style='font-size: 0.8em;'>⚠️ For research purposes only. Not for clinical use.</p>
+        <p style='font-size: 0.75em; color: #999; margin-top: 10px;'>
+            <strong>Model Limitation:</strong> Predicts parent compound toxicity only. 
+            Does not account for metabolic activation or bioactivation pathways. 
+            False negatives possible for compounds toxic via metabolism (e.g., Valproic Acid).
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
