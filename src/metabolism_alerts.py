@@ -28,7 +28,10 @@ class MetabolismRiskDetector:
             'phenol': 'c1ccccc1O',  # Can form reactive quinones
             'carboxylic_acid': '[CX3](=O)[OX2H1]',  # Can form reactive acyl glucuronides
             'terminal_alkene': 'C=C[CX4]',  # Can form reactive epoxides
-            'aliphatic_hydroxyl': '[CX4][OX2H]'  # Can be oxidized
+            'aliphatic_hydroxyl': '[CX4][OX2H]',  # Can be oxidized
+            'nitrogen_mustard': '[N]([CH2][CH2][Cl])[CH2][CH2][Cl]',  # Alkylating agents (cyclophosphamide, ifosfamide)
+            'alkyl_chloride': '[CX4][Cl]',  # Can form reactive carbocations
+            'phosphoramide': 'P(=O)(N)(N)',  # Phosphoramide chemotherapy agents
         }
         
         # Known hepatotoxic substructures (after metabolism)
@@ -37,6 +40,8 @@ class MetabolismRiskDetector:
             'acetaminophen_like': '[#6]1:[#6]:[#6](O):[#6]:[#6]:[#6]:1NC(=O)[CH3]',
             'isoniazid_like': '[#6]1:[#6]:[#6]:[#7]:[#6]:[#6]:1C(=O)NN',
             'nsaid_like': 'c1ccccc1CC(=O)O',  # Arylacetic acid
+            'cyclophosphamide_like': 'P(=O)(N1CCCO1)N([CH2][CH2]Cl)[CH2][CH2]Cl',  # Oxazaphosphorine nitrogen mustards
+            'alkylating_agent': '[N,O,S]([CH2][CH2][Cl,Br,I])([CH2][CH2][Cl,Br,I])',  # Bis-haloalkyl compounds (DNA alkylators)
         }
         
         # Compile SMARTS patterns
@@ -60,22 +65,34 @@ class MetabolismRiskDetector:
         # Check for reactive metabolite-forming groups
         for name, pattern in self.reactive_patterns.items():
             if pattern and mol.HasSubstructMatch(pattern):
+                # Higher risk for alkylating agents and nitrogen mustards
+                if name in ['nitrogen_mustard', 'alkyl_chloride']:
+                    risk_contribution = 25  # VERY HIGH RISK - DNA alkylators
+                else:
+                    risk_contribution = 10
+                    
                 detected_alerts.append({
                     'type': 'reactive_metabolite_precursor',
                     'pattern': name,
-                    'risk_contribution': 10
+                    'risk_contribution': risk_contribution
                 })
-                risk_score += 10
+                risk_score += risk_contribution
         
-        # Check for known hepatotoxic scaffolds
+        # Check for known hepatotoxic scaffolds (HIGHEST PRIORITY)
         for name, pattern in self.hepatotoxic_patterns_mol.items():
             if pattern and mol.HasSubstructMatch(pattern):
+                # Maximum risk for alkylating agents (chemotherapy drugs)
+                if 'alkylating' in name or 'cyclophosphamide' in name:
+                    risk_contribution = 50  # EXTREME RISK
+                else:
+                    risk_contribution = 30
+                    
                 detected_alerts.append({
                     'type': 'hepatotoxic_scaffold',
                     'pattern': name,
-                    'risk_contribution': 30
+                    'risk_contribution': risk_contribution
                 })
-                risk_score += 30
+                risk_score += risk_contribution
         
         # Additional risk factors
         risk_factors = self._assess_structural_risk_factors(mol)
