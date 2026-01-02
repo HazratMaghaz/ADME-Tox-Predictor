@@ -12,7 +12,7 @@ from rdkit.Chem import Descriptors, Lipinski
 
 from smiles_processor import SMILESProcessor
 from metabolism_alerts import MetabolismRiskDetector
-from metabolite_generator import MetaboliteGenerator
+from ml_metabolite_predictor import MLMetabolitePredictor
 
 
 class ADMEToxPredictor:
@@ -29,7 +29,7 @@ class ADMEToxPredictor:
         self.models_dir = Path(models_dir)
         self.processor = SMILESProcessor(use_extended_descriptors=use_extended_descriptors)
         self.metabolism_detector = MetabolismRiskDetector()
-        self.metabolite_generator = MetaboliteGenerator()
+        self.metabolite_predictor = MLMetabolitePredictor()  # ML-based, not rule-based
         self.use_extended_descriptors = use_extended_descriptors
         self.models = {}
         self.scaler = None
@@ -265,10 +265,11 @@ class ADMEToxPredictor:
     
     def _predict_metabolite_toxicity(self, parent_smiles: str) -> list:
         """
-        Generate metabolites and predict their hepatotoxicity
+        Generate metabolites using ML-based prediction and assess their hepatotoxicity
         Returns list of metabolite data with toxicity predictions
         """
-        metabolites = self.metabolite_generator.generate_metabolites(parent_smiles, max_depth=1)
+        # Use ML-based metabolite prediction (NOT rule-based)
+        metabolites = self.metabolite_predictor.predict_metabolites(parent_smiles, top_n=10)
         metabolite_predictions = []
         
         for met in metabolites:
@@ -290,7 +291,8 @@ class ADMEToxPredictor:
                         'reaction': met['reaction'],
                         'description': met['description'],
                         'hep_prob': hep_proba[1],
-                        'is_toxic': hep_proba[1] >= 0.40
+                        'is_toxic': hep_proba[1] >= 0.40,
+                        'probability_score': met['probability']  # ML confidence score
                     })
             except Exception:
                 continue

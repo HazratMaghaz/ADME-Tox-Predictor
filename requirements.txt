@@ -7,3 +7,5 @@ rdkit-pypi>=2022.9.5
 plotly>=5.17.0
 Pillow>=10.0.0
 pubchempy>=1.0.4
+sygma>=1.1.0
+future>=1.0.0

@@ -365,7 +365,8 @@ def display_prediction_report(result):
                             if pred.get('toxic_metabolites'):
                                 st.write(f"\n**⚠️ Toxic Metabolites Found:** {len(pred['toxic_metabolites'])}")
                                 for i, met in enumerate(pred['toxic_metabolites'][:5], 1):
-                                    st.write(f"{i}. **{met['reaction']}** - {met['hep_prob']*100:.1f}% toxic")
+                                    ml_confidence = met.get('probability_score', 0)
+                                    st.write(f"{i}. **{met['reaction']}** - {met['hep_prob']*100:.1f}% toxic (ML confidence: {ml_confidence:.2f})")
                                     st.caption(f"   {met['description']}")
                                     st.code(met['smiles'], language=None)
                             
