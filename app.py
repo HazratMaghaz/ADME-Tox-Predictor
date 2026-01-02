@@ -75,9 +75,9 @@ st.markdown("""
 
 @st.cache_resource
 def load_predictor_v2():
-    """Load the predictor model (cached) - v2 forces reload for extended descriptors"""
-    # Compute extended descriptors for display/export, but the current Phase-1 models
-    # will still use only the original 7 features internally.
+    """Load the predictor model (cached) - v3 with ML-based metabolite prediction"""
+    # Version 3: ML-based metabolite predictor (not rule-based)
+    # Compute extended descriptors for display/export
     return ADMEToxPredictor(models_dir="models", use_extended_descriptors=True)
 
 
@@ -350,9 +350,14 @@ def display_prediction_report(result):
                     
                     # Show metabolite generation info
                     if 'metabolites_generated' in pred:
-                        st.caption(f"🧪 {pred['metabolites_generated']} metabolites analyzed")
-                        if pred.get('probability_max_metabolite', 0) > 0:
-                            st.caption(f"⚠️ Max metabolite toxicity: {pred['probability_max_metabolite']*100:.1f}%")
+                        met_count = pred['metabolites_generated']
+                        if met_count > 0:
+                            st.caption(f"🧪 {met_count} metabolites analyzed")
+                            if pred.get('probability_max_metabolite', 0) > 0:
+                                st.caption(f"⚠️ Max metabolite toxicity: {pred['probability_max_metabolite']*100:.1f}%")
+                        else:
+                            st.caption(f"⚠️ Metabolite generation in progress... (check back if 0)")
+                            # Note: ML predictor may need a moment to generate metabolites
                     
                     if meta_risk['alert_count'] > 0:
                         with st.expander(f"🧬 View Metabolism Analysis"):

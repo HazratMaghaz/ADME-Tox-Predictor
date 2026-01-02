@@ -29,7 +29,15 @@ class ADMEToxPredictor:
         self.models_dir = Path(models_dir)
         self.processor = SMILESProcessor(use_extended_descriptors=use_extended_descriptors)
         self.metabolism_detector = MetabolismRiskDetector()
-        self.metabolite_predictor = MLMetabolitePredictor()  # ML-based, not rule-based
+        
+        # Initialize ML-based metabolite predictor
+        try:
+            self.metabolite_predictor = MLMetabolitePredictor()
+            print("[INFO] ML-based metabolite predictor initialized")
+        except Exception as e:
+            print(f"[ERROR] Failed to initialize metabolite predictor: {e}")
+            self.metabolite_predictor = None
+            
         self.use_extended_descriptors = use_extended_descriptors
         self.models = {}
         self.scaler = None
@@ -268,12 +276,19 @@ class ADMEToxPredictor:
         Generate metabolites using ML-based prediction and assess their hepatotoxicity
         Returns list of metabolite data with toxicity predictions
         """
+        # Check if metabolite predictor is available
+        if self.metabolite_predictor is None:
+            print("[ERROR] Metabolite predictor not initialized")
+            return []
+            
         # Use ML-based metabolite prediction (NOT rule-based)
         try:
             metabolites = self.metabolite_predictor.predict_metabolites(parent_smiles, top_n=10)
-            print(f"[DEBUG] Generated {len(metabolites)} metabolites for {parent_smiles}")
+            print(f"[INFO] Generated {len(metabolites)} metabolites for compound")
         except Exception as e:
             print(f"[ERROR] Metabolite generation failed: {e}")
+            import traceback
+            traceback.print_exc()
             return []
         
         metabolite_predictions = []
