@@ -347,12 +347,34 @@ def display_prediction_report(result):
                 # Show metabolic liability details for hepatotoxicity
                 if endpoint == 'hepatotoxicity' and 'metabolic_risk' in pred:
                     meta_risk = pred['metabolic_risk']
+                    
+                    # Show metabolite generation info
+                    if 'metabolites_generated' in pred:
+                        st.caption(f"🧪 {pred['metabolites_generated']} metabolites analyzed")
+                        if pred.get('probability_max_metabolite', 0) > 0:
+                            st.caption(f"⚠️ Max metabolite toxicity: {pred['probability_max_metabolite']*100:.1f}%")
+                    
                     if meta_risk['alert_count'] > 0:
-                        with st.expander(f"🧬 View {meta_risk['alert_count']} Metabolic Alert(s)"):
-                            st.write(f"**Metabolic Risk Score:** {meta_risk['metabolic_risk_score']}% ({meta_risk['risk_level']})")
+                        with st.expander(f"🧬 View Metabolism Analysis"):
+                            st.write(f"**Structural Alerts:** {meta_risk['metabolic_risk_score']}% ({meta_risk['risk_level']})")
                             st.write("**Detected Patterns:**")
                             for alert in meta_risk['detected_alerts']:
                                 st.write(f"- {alert['pattern']} (+{alert['risk_contribution']}%)")
+                            
+                            # Show toxic metabolites if any
+                            if pred.get('toxic_metabolites'):
+                                st.write(f"\n**⚠️ Toxic Metabolites Found:** {len(pred['toxic_metabolites'])}")
+                                for i, met in enumerate(pred['toxic_metabolites'][:5], 1):
+                                    st.write(f"{i}. **{met['reaction']}** - {met['hep_prob']*100:.1f}% toxic")
+                                    st.caption(f"   {met['description']}")
+                                    st.code(met['smiles'], language=None)
+                            
+                            # Show prediction breakdown
+                            st.write(f"\n**Prediction Breakdown:**")
+                            st.write(f"- Parent structure only: {pred.get('probability_base', 0)*100:.1f}%")
+                            st.write(f"- Parent + structural alerts: {pred.get('probability_parent_adjusted', 0)*100:.1f}%")
+                            st.write(f"- Max metabolite: {pred.get('probability_max_metabolite', 0)*100:.1f}%")
+                            st.write(f"- **FINAL:** {pred['probability']*100:.1f}%")
                 
                 st.markdown("")
     
@@ -777,9 +799,9 @@ def main():
         <p>Built with RDKit, Scikit-learn, and Streamlit</p>
         <p style='font-size: 0.8em;'>⚠️ For research purposes only. Not for clinical use.</p>
         <p style='font-size: 0.75em; color: #999; margin-top: 10px;'>
-            <strong>Model Limitation:</strong> Predicts parent compound toxicity only. 
-            Does not account for metabolic activation or bioactivation pathways. 
-            False negatives possible for compounds toxic via metabolism (e.g., Valproic Acid).
+            <strong>Metabolite Prediction:</strong> System generates Phase I metabolites (CYP450 reactions) 
+            and predicts toxicity of both parent compound and metabolites. Covers common biotransformations 
+            including hydroxylation, dealkylation, epoxidation, and hydrolysis reactions.
         </p>
     </div>
     """, unsafe_allow_html=True)
