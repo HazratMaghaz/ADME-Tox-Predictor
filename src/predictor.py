@@ -12,6 +12,7 @@ from rdkit.Chem import Descriptors, Lipinski
 
 from smiles_processor import SMILESProcessor
 from metabolism_alerts import MetabolismRiskDetector
+from metabolite_generator import MetaboliteGenerator
 
 
 class ADMEToxPredictor:
@@ -28,6 +29,7 @@ class ADMEToxPredictor:
         self.models_dir = Path(models_dir)
         self.processor = SMILESProcessor(use_extended_descriptors=use_extended_descriptors)
         self.metabolism_detector = MetabolismRiskDetector()
+        self.metabolite_generator = MetaboliteGenerator()
         self.use_extended_descriptors = use_extended_descriptors
         self.models = {}
         self.scaler = None
@@ -211,28 +213,40 @@ class ADMEToxPredictor:
                 'interpretation': 'Carcinogenic risk' if carc_pred == 1 else 'No carcinogenic risk'
             }
         
-        # Hepatotoxicity (Classification) - ADJUSTED FOR METABOLIC ACTIVATION
+        # Hepatotoxicity (Classification) - WITH METABOLITE PREDICTION
         if 'hepatotoxicity' in self.models:
             hep_pred = self.models['hepatotoxicity'].predict(feature_vector_scaled)[0]
             hep_proba = self.models['hepatotoxicity'].predict_proba(feature_vector_scaled)[0]
             base_hep_prob = hep_proba[1]
             
-            # Detect metabolic activation risk
+            # Detect metabolic activation risk (structural alerts)
             metabolic_risk = self.metabolism_detector.detect_metabolic_liability(smiles)
             
-            # Adjust hepatotoxicity for metabolic activation
-            adjusted_prob, adjusted_risk = self.metabolism_detector.adjust_hepatotoxicity_prediction(
+            # Generate metabolites and predict their toxicity
+            metabolite_data = self._predict_metabolite_toxicity(smiles)
+            
+            # Combine: max of (parent + structural alerts) OR (any metabolite)
+            parent_adjusted_prob, _ = self.metabolism_detector.adjust_hepatotoxicity_prediction(
                 base_hep_prob, metabolic_risk
             )
             
+            # If any metabolite is highly toxic, flag as high risk
+            max_metabolite_prob = max([m['hep_prob'] for m in metabolite_data], default=0)
+            final_prob = max(parent_adjusted_prob, max_metabolite_prob)
+            final_risk = 1 if final_prob >= 0.40 else 0
+            
             predictions['predictions']['hepatotoxicity'] = {
-                'risk': int(adjusted_risk),
-                'probability': round(adjusted_prob, 3),
+                'risk': int(final_risk),
+                'probability': round(final_prob, 3),
                 'probability_base': round(base_hep_prob, 3),
-                'metabolic_adjustment': round(adjusted_prob - base_hep_prob, 3),
-                'risk_level': self._get_risk_level(adjusted_prob),
-                'interpretation': 'Hepatotoxic (liver toxic)' if adjusted_risk == 1 else 'Non-hepatotoxic',
-                'metabolic_risk': metabolic_risk
+                'probability_parent_adjusted': round(parent_adjusted_prob, 3),
+                'probability_max_metabolite': round(max_metabolite_prob, 3),
+                'metabolic_adjustment': round(parent_adjusted_prob - base_hep_prob, 3),
+                'risk_level': self._get_risk_level(final_prob),
+                'interpretation': 'Hepatotoxic (liver toxic)' if final_risk == 1 else 'Non-hepatotoxic',
+                'metabolic_risk': metabolic_risk,
+                'metabolites_generated': len(metabolite_data),
+                'toxic_metabolites': [m for m in metabolite_data if m['hep_prob'] >= 0.40]
             }
         
         # Overall risk score
@@ -248,6 +262,40 @@ class ADMEToxPredictor:
             return "Moderately soluble"
         else:
             return "Highly soluble"
+    
+    def _predict_metabolite_toxicity(self, parent_smiles: str) -> list:
+        """
+        Generate metabolites and predict their hepatotoxicity
+        Returns list of metabolite data with toxicity predictions
+        """
+        metabolites = self.metabolite_generator.generate_metabolites(parent_smiles, max_depth=1)
+        metabolite_predictions = []
+        
+        for met in metabolites:
+            try:
+                # Get features for metabolite
+                met_features = self.processor.process(met['smiles'])
+                if met_features is None:
+                    continue
+                
+                # Scale features
+                met_scaled = self.scaler.transform([met_features])
+                
+                # Predict hepatotoxicity of metabolite
+                if 'hepatotoxicity' in self.models:
+                    hep_proba = self.models['hepatotoxicity'].predict_proba(met_scaled)[0]
+                    
+                    metabolite_predictions.append({
+                        'smiles': met['smiles'],
+                        'reaction': met['reaction'],
+                        'description': met['description'],
+                        'hep_prob': hep_proba[1],
+                        'is_toxic': hep_proba[1] >= 0.40
+                    })
+            except Exception:
+                continue
+        
+        return metabolite_predictions
     
     def _get_risk_level(self, probability: float) -> str:
         """Convert probability to risk level"""
