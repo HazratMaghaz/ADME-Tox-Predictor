@@ -430,19 +430,6 @@ def main():
         if selected_example:
             st.session_state['example_smiles'] = examples[selected_example]
     
-    # Success Message - Metabolism Module Now Active!
-    st.success("""
-    ✅ **METABOLISM DETECTION ACTIVE** - Full ADME Coverage!
-    
-    This tool now includes **metabolic activation detection** that identifies compounds with bioactivation liability.
-    The hepatotoxicity model is automatically adjusted for compounds with reactive metabolite risk patterns including:
-    - Valproic Acid-like structures (acyl glucuronides)
-    - Acetaminophen-like scaffolds (quinone-imine formation)
-    - Other bioactivation-prone chemical groups
-    
-    **A + D + M + E = Complete ADME-Tox Prediction**
-    """)
-    
     # Main tabs
     tab1, tab2 = st.tabs(["🔬 Single Prediction", "📊 Batch Prediction"])
     
