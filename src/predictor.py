@@ -269,17 +269,28 @@ class ADMEToxPredictor:
         Returns list of metabolite data with toxicity predictions
         """
         # Use ML-based metabolite prediction (NOT rule-based)
-        metabolites = self.metabolite_predictor.predict_metabolites(parent_smiles, top_n=10)
+        try:
+            metabolites = self.metabolite_predictor.predict_metabolites(parent_smiles, top_n=10)
+            print(f"[DEBUG] Generated {len(metabolites)} metabolites for {parent_smiles}")
+        except Exception as e:
+            print(f"[ERROR] Metabolite generation failed: {e}")
+            return []
+        
         metabolite_predictions = []
         
-        for met in metabolites:
+        for i, met in enumerate(metabolites):
             try:
                 # Get features for metabolite
                 met_features = self.processor.process(met['smiles'])
                 if met_features is None:
+                    print(f"[DEBUG] Metabolite {i+1} feature extraction failed")
                     continue
                 
                 # Scale features
+                if self.scaler is None:
+                    print(f"[ERROR] Scaler not loaded, cannot process metabolites")
+                    break
+                    
                 met_scaled = self.scaler.transform([met_features])
                 
                 # Predict hepatotoxicity of metabolite
@@ -294,9 +305,12 @@ class ADMEToxPredictor:
                         'is_toxic': hep_proba[1] >= 0.40,
                         'probability_score': met['probability']  # ML confidence score
                     })
-            except Exception:
+                    print(f"[DEBUG] Metabolite {i+1}: {met['reaction']} = {hep_proba[1]*100:.1f}% toxic")
+            except Exception as e:
+                print(f"[DEBUG] Metabolite {i+1} processing error: {e}")
                 continue
         
+        print(f"[INFO] Successfully processed {len(metabolite_predictions)} metabolites")
         return metabolite_predictions
     
     def _get_risk_level(self, probability: float) -> str:
