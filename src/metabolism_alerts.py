@@ -32,6 +32,8 @@ class MetabolismRiskDetector:
             'nitrogen_mustard': '[N]([CH2][CH2][Cl])[CH2][CH2][Cl]',  # Alkylating agents (cyclophosphamide, ifosfamide)
             'alkyl_chloride': '[CX4][Cl]',  # Can form reactive carbocations
             'phosphoramide': 'P(=O)(N)(N)',  # Phosphoramide chemotherapy agents
+            'nitrosourea': '[N]([N]=[O])[C](=[O])[N]',  # Nitrosourea alkylating agents (carmustine, lomustine)
+            'alkyl_sulfonate': '[C][S](=O)(=O)[O][C]',  # Alkyl sulfonate alkylators (busulfan)
         }
         
         # Known hepatotoxic substructures (after metabolism)
@@ -65,8 +67,8 @@ class MetabolismRiskDetector:
         # Check for reactive metabolite-forming groups
         for name, pattern in self.reactive_patterns.items():
             if pattern and mol.HasSubstructMatch(pattern):
-                # Higher risk for alkylating agents and nitrogen mustards
-                if name in ['nitrogen_mustard', 'alkyl_chloride']:
+                # Higher risk for alkylating agents and related chemotherapy drugs
+                if name in ['nitrogen_mustard', 'alkyl_chloride', 'nitrosourea', 'alkyl_sulfonate']:
                     risk_contribution = 25  # VERY HIGH RISK - DNA alkylators
                 else:
                     risk_contribution = 10
