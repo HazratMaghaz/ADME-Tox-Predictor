@@ -74,10 +74,10 @@ st.markdown("""
 
 
 @st.cache_resource
-def load_predictor_v2():
-    """Load the predictor model (cached) - v3 with ML-based metabolite prediction"""
-    # Version 3: ML-based metabolite predictor (not rule-based)
-    # Compute extended descriptors for display/export
+def load_predictor_v2(_version="v4_ml_metabolite_20260103"):
+    """Load the predictor model (cached) - v4 with ML-based metabolite prediction"""
+    # Version 4: Force cache refresh for ML-based metabolite predictor
+    # Added explicit version parameter to bust Streamlit cache
     return ADMEToxPredictor(models_dir="models", use_extended_descriptors=True)
 
 
