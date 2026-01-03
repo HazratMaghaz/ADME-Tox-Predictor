@@ -12,7 +12,16 @@ from rdkit.Chem import Descriptors, Lipinski
 
 from smiles_processor import SMILESProcessor
 from metabolism_alerts import MetabolismRiskDetector
-from ml_metabolite_predictor import MLMetabolitePredictor
+
+print("[DEBUG] About to import MLMetabolitePredictor...")
+try:
+    from ml_metabolite_predictor import MLMetabolitePredictor
+    print("[DEBUG] MLMetabolitePredictor imported successfully!")
+except Exception as e:
+    print(f"[ERROR] Failed to import MLMetabolitePredictor: {e}")
+    import traceback
+    traceback.print_exc()
+    MLMetabolitePredictor = None
 
 
 class ADMEToxPredictor:
@@ -31,12 +40,19 @@ class ADMEToxPredictor:
         self.metabolism_detector = MetabolismRiskDetector()
         
         # Initialize ML-based metabolite predictor
-        try:
-            self.metabolite_predictor = MLMetabolitePredictor()
-            print("[INFO] ML-based metabolite predictor initialized")
-        except Exception as e:
-            print(f"[ERROR] Failed to initialize metabolite predictor: {e}")
+        print("[DEBUG] Attempting to initialize MLMetabolitePredictor...")
+        if MLMetabolitePredictor is None:
+            print("[ERROR] MLMetabolitePredictor class is None - import failed")
             self.metabolite_predictor = None
+        else:
+            try:
+                self.metabolite_predictor = MLMetabolitePredictor()
+                print("[SUCCESS] ML-based metabolite predictor initialized!")
+            except Exception as e:
+                print(f"[ERROR] Failed to initialize metabolite predictor: {e}")
+                import traceback
+                traceback.print_exc()
+                self.metabolite_predictor = None
             
         self.use_extended_descriptors = use_extended_descriptors
         self.models = {}
